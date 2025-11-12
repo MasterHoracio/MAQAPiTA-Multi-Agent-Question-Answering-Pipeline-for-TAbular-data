@@ -1,0 +1,49 @@
+Question: ¿Cuál es la respuesta más común a la pregunta sobre si se ha seguido alguna dieta?
+
+Answer:
+
+def answer(df: pd.DataFrame):
+    """DO NOT add comments or code outside this function."""
+    # Select the column with the responses to whether the person has done a diet
+    col = '¿Sigues en la actualidad algún tipo de dieta para adelgazar o perder peso?'
+
+    # Drop missing values from the column
+    valid_responses = df[col].dropna()
+
+    # Count the frequency of each valid response
+    response_counts = valid_responses.value_counts()
+
+    # Return the most frequent response (mode)
+    return response_counts.idxmax()
+
+Question: ¿Cuántos hombres han sido entrevistados?
+
+Answer:
+
+def answer(df: pd.DataFrame):
+    """DO NOT add comments or code outside this function."""
+    """Explain each line of code with a Python comment above it."""
+    # Filter the rows where the value in the 'Sexo' column is 'Hombre'
+    hombres = df[df['Sexo'] == 'Hombres']
+    
+    # Count the number of rows in the filtered DataFrame
+    count_hombres = len(hombres)
+    
+    # Return the count of men interviewed
+    return count_hombres
+
+Question: ¿Cuántos de los encuestados se han encontrado con frecuencia o de vez en cuando con un sentimiento de soledad?
+
+Answer:
+
+def answer(df: pd.DataFrame):
+    """DO NOT add comments or code outside this function."""
+    """Explain each line of code with a Python comment above it."""
+    # Create a boolean mask where 'Sentimiento de soledad' is 'Con frecuencia' or 'De vez en cuando'
+    mask = df['Sentimiento de soledad'].isin(['Con frecuencia', 'De vez en cuando'])
+    
+    # Count the number of rows that match the condition
+    count = mask.sum()
+    
+    # Return the count as the final answer
+    return count
