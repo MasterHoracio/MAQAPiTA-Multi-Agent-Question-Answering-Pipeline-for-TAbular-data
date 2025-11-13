@@ -10,14 +10,29 @@ class promptGenerator():
         self.df                 = load_table(row["dataset"], lang="ES")
         self.python_types       = self.df.dtypes.apply(lambda x: x.type)
         self.columns            = list(self.df.columns)
-        self.reduced_columns    = None
+
+        self.agent_headers      = {
+        "code": "You are a numpy and pandas code generator. Complete the function provided.",
+        "instructions": "You are an experienced software engineer. Describe the high-level steps to address and solve a given question.",
+        "columns": "You are an experienced data analyst. Select the column(s) of a DataFrame needed to answer a given question.",
+        "code_correction": "You are an experienced Python developer. Fix the following bug.",
+        "default": "You are a helpful assistant, please follow every instruction in the following prompt."
+        }
         
         if FewShot:
-            with open('samples.txt', 'r', encoding='utf-8') as file:
+            with open('utilities/few_shot_samples.txt', 'r', encoding='utf-8') as file:
                 content = file.read()
             self.samples = content
         else:
             self.samples = None
+
+    def build_full_prompt(self, prompt, type_prompt):
+        system_role = {"role": "system", "content": self.agent_headers[type_prompt]}
+        full_prompt = [system_role, {"role": "user", "content": prompt}]
+        return full_prompt
+    
+    def getColumnNames(self, list_indices):
+        return [self.df.columns[i] for i in list_indices]
 
     def setReducedColumns(self, columns):
         reduced = []
@@ -27,48 +42,8 @@ class promptGenerator():
                 reduced.append(column)
         
         self.reduced_columns = reduced
-    
-    def getTopKColumns(self, k) -> str:
-        return f"""From the following dataframe columns: {self.df.columns.tolist()}
-                Select the top-{k} column(s) that are most useful for answering the following question:
-                "{self.question}"
-                
-                Context:
-                - Expected answer type: {self.type_ans}
-                - Column data types: {self.python_types}
-                - First 10 rows of the dataframe:
-                {self.df.head(10).to_string()}
-                
-                Instructions:
-                * Select exactly {k} columns.
-                * Respond with a valid Python list of integers, each representing the index of a selected column (0-based indexing).
-                * Reply with the list only — no additional text or explanation.
-                """
-
-    def getColumnNames(self, list_indices):
-        column_names = [self.df.columns[i] for i in list_indices]
-        return column_names
 
     def getColumns(self) -> str:
-        return f'''
-        From these columns: {self.reduced_columns}, select ONLY those needed to answer:
-        "{self.question}"
-
-        Details:
-        - Expected answer type: {self.type_ans}
-        - Column types: {self.df[self.reduced_columns].dtypes.apply(lambda x: x.type)}
-        - First 10 rows:
-        {self.df[self.reduced_columns].head(10).to_string()}
-
-        Instructions:
-        * Consider column data types before selecting.
-        * Use EXACT column names shown above.
-        * Reply with a valid Python list of strings.
-        * NOTHING else—no extra text or formatting.
-        * Select the FEWEST COLUMNS POSSIBLE (1–2 max).
-        '''
-
-    def getColumnsV2(self) -> str:
         return f'''
                 From these columns: {self.df.columns.tolist()}, select ONLY the column(s) needed to answer the following question:  
                 "{self.question}"
@@ -84,7 +59,7 @@ class promptGenerator():
                 * Use EXACT column names shown above.  
                 * Reply with a Python list of strings—only the selected column(s).  
                 * NOTHING else—no extra text or formatting.
-                * Choose the FEWEST columns needed (1–2 max).  
+                * Choose the FEWEST columns needed (1 – 2 max).  
                 '''
     
     def getInstructions(self, relevantColumns: str) -> str:
