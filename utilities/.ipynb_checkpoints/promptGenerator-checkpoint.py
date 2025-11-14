@@ -16,6 +16,7 @@ class promptGenerator():
         "instructions": "You are an experienced software engineer. Describe the high-level steps to address and solve a given question.",
         "columns": "You are an experienced data analyst. Select the column(s) of a DataFrame needed to answer a given question.",
         "code_correction": "You are an experienced Python developer. Fix the following bug.",
+        "baseline": "You are a pandas code generator. Your goal is to complete the function provided.",
         "default": "You are a helpful assistant, please follow every instruction in the following prompt."
         }
         
@@ -43,24 +44,60 @@ class promptGenerator():
         
         self.reduced_columns = reduced
 
+    def baselinePrompt(self, row: dict) -> str:
+        dataset = row["dataset"]
+        question = row["question"]
+        df = load_table(row["dataset"], lang="ES")
+        return f'''
+        Follow the following instructions
+        * You must not write any more code apart from that.
+        * You only have access to pandas and numpy.
+        * Pay attention to the type formatting .
+        * You cannot read files from disk.
+        * The answer should be short and concise, in the format I specify.
+        * DO NOT do anything else other than filling the function provided.
+        * DO NOT wrap your code in ```python``` marks. Answer in plain text.
+        * Answer in one of the following formats, depending on the question
+        1. True/False (do not answer with np.True_ or np.False_, but rather True or False)
+        2. with a value from the dataframe, (category/number)
+        3. with a list of values (either categories or numbers)
+        
+        import pandas as pd
+        import numpy as np
+        import openai
+        import os
+        import asyncio
+        
+        # This is an example
+        def example(df: pd.DataFrame):
+        """Returns the answer to the question: How many rows are there in the dataframe? """
+        df.columns = {list(df.columns)}
+        return df.shape[0]
+        
+        # This is the question you have to answer
+        def answer(df: pd.DataFrame):
+        """Returns the answer to the question: {question} """
+        df.columns = {list(df.columns)}
+        return '''
+
     def getColumns(self) -> str:
         return f'''
-                From these columns: {self.df.columns.tolist()}, select ONLY the column(s) needed to answer the following question:  
-                "{self.question}"
-                
-                Details:
-                - Expected answer type: {self.type_ans}  
-                - Column types: {self.python_types}  
-                - First 5 rows:  
-                {self.df.head(5).to_string()}
-                
-                Instructions:  
-                * Consider column data types before selecting.
-                * Use EXACT column names shown above.  
-                * Reply with a Python list of strings—only the selected column(s).  
-                * NOTHING else—no extra text or formatting.
-                * Choose the FEWEST columns needed (1 – 2 max).  
-                '''
+        From these columns: {self.df.columns.tolist()}, select ONLY the column(s) needed to answer the following question:  
+        "{self.question}"
+        
+        Details:
+        - Expected answer type: {self.type_ans}  
+        - Column types: {self.python_types}  
+        - First 5 rows:  
+        {self.df.head(5).to_string()}
+        
+        Instructions:  
+        * Consider column data types before selecting.
+        * Use EXACT column names shown above.  
+        * Reply with a Python list of strings—only the selected column(s).  
+        * NOTHING else—no extra text or formatting.
+        * Choose the FEWEST columns needed (1 – 2 max).  
+        '''
     
     def getInstructions(self, relevantColumns: str) -> str:
         return f'''
