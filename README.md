@@ -41,6 +41,7 @@ The baseline consists of a **single prompt** directing the LLM to complete a Pyt
 
 ## 📁 Project Structure
 
+```
 MAQAPiTA/
 │
 ├── img/
@@ -63,7 +64,7 @@ MAQAPiTA/
 │
 ├── maqapita.py # Main entry point to run the multi-agent pipeline
 └── baseline.py # Baseline method using a single LLM prompt
-
+```
 
 ---
 
