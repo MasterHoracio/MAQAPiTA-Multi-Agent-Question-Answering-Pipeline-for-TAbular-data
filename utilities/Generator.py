@@ -1,3 +1,8 @@
+import warnings
+warnings.filterwarnings("ignore")
+warnings.filterwarnings("ignore", category=UserWarning, module='tqdm')
+warnings.filterwarnings("ignore", category=UserWarning, module='tqdm.notebook')
+
 import transformers
 import torch
 
@@ -5,6 +10,12 @@ class Generator:
     def __init__(self, model: str, device: object):
         self.device         = device
         self.model_name     = model
+
+        display_msg = "Loading: " + self.model_name
+        print("#"*70)
+        print(display_msg.center(70))
+        print("#"*70)
+        
         self.pipeline       = transformers.pipeline(
                                     "text-generation",
                                     model=self.model_name,

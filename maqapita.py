@@ -9,6 +9,7 @@ sys.path.append("..")
 import os
 import ast
 import json
+import argparse
 
 import torch
 
@@ -56,6 +57,10 @@ def answer(df):
 def run_pipeline(qa_dataset, gen):
     responses = []
 
+    print("#"*70)
+    print("Testing dataset...".center(70))
+    print("#"*70)
+
     for instance in tqdm(qa_dataset):
         prompt_handler = promptGenerator.promptGenerator(instance, True)
 
@@ -87,18 +92,24 @@ def run_pipeline(qa_dataset, gen):
 
         responses.append([str(output_code)])
     
-def main():
+    return responses
+    
+def main(args):
     device     = torch.device("cuda:3")  # Select GPU 4
-    model_name = "meta-llama/Meta-Llama-3.1-8B-Instruct" # "google/gemma-3-4b-it"
+    model_name = args.model # "meta-llama/Meta-Llama-3.1-8B-Instruct", "google/gemma-3-4b-it"
     gen        = Generator.Generator(model_name, device)
+    path       = "output_results/"
+    file       = "maqapita_predictions"
 
     qa_dev = load_qa(lang="ES", name="iberlef", split="dev")
     responses = run_pipeline(qa_dev, gen)
 
     evaluator = Evaluator(qa=qa_dev)
     print(f"DataBenchSPA accuracy is {evaluator.eval(responses)}")
-    save_responses(responses, "predictions.txt")
-
+    save_responses(responses, path + file + ".txt")
     
 if __name__ == "__main__":
-    main()
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--model", type=str, required=True)
+    args = parser.parse_args()
+    main(args)

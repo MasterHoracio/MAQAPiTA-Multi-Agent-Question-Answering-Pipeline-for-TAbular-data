@@ -9,6 +9,7 @@ sys.path.append("..")
 import torch
 
 import json
+import argparse
 import numpy as np
 import pandas as pd
 from tqdm import tqdm
@@ -58,6 +59,10 @@ def answer(df):
 def run_baseline(qa_dataset, gen):
     responses = []
 
+    print("#"*70)
+    print("Testing dataset...".center(70))
+    print("#"*70)
+
     for instance in tqdm(qa_dataset):
         prompt_handler = promptGenerator.promptGenerator(instance, False)
         prompt         = prompt_handler.build_full_prompt(prompt_handler.baselinePrompt(instance), "baseline")
@@ -67,11 +72,15 @@ def run_baseline(qa_dataset, gen):
         output_code    = example_postprocess(code, instance)
         
         responses.append([str(output_code)])
+        
+    return responses
 
-def main():
+def main(args):
     device     = torch.device("cuda:3")  # Select GPU 3
-    model_name = "meta-llama/Meta-Llama-3.1-8B-Instruct" # "google/gemma-3-4b-it"
+    model_name = args.model # "meta-llama/Meta-Llama-3.1-8B-Instruct", "google/gemma-3-4b-it"
     gen        = Generator.Generator(model_name, device)
+    path       = "output_results/"
+    file       = "baseline_predictions"
 
     qa_dev     = load_qa(lang="ES", name="iberlef", split="dev")
 
@@ -79,7 +88,10 @@ def main():
 
     evaluator  = Evaluator(qa=qa_dev)
     print(f"DataBenchSPA accuracy is {evaluator.eval(responses)}")
-    save_responses(responses, "predictions.txt")
+    save_responses(responses, path + file + ".txt")
 
 if __name__ == "__main__":
-    main()
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--model", type=str, required=True)
+    args = parser.parse_args()
+    main(args)
